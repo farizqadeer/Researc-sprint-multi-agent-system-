@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Research Pipeline</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        /* ── Header ── */
+        .header {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border-bottom: 1px solid #1e293b;
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .header-icon {
+            width: 42px; height: 42px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+        }
+
+        .header h1 { font-size: 20px; font-weight: 600; }
+        .header p { font-size: 13px; color: #94a3b8; margin-top: 2px; }
+
+        /* ── Main Layout ── */
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 24px;
+        }
+
+        /* ── Input Section ── */
+        .input-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 28px;
+        }
+
+        .input-card h2 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #f1f5f9;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .input-row input {
+            flex: 1;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            padding: 13px 18px;
+            border-radius: 10px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+
+        .input-row input:focus { border-color: #6366f1; }
+        .input-row input::placeholder { color: #64748b; }
+
+        .btn-generate {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 13px 28px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+
+        .btn-generate:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* ── Suggested Topics ── */
+        .suggestions {
+            margin-top: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .suggestion-label {
+            font-size: 12px;
+            color: #64748b;
+            width: 100%;
+            margin-bottom: 2px;
+        }
+
+        .chip {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chip:hover {
+            border-color: #6366f1;
+            color: #a5b4fc;
+        }
+
+        /* ── Progress Section ── */
+        .progress-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 28px;
+            display: none;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .progress-header h3 { font-size: 15px; color: #f1f5f9; }
+
+        .stage-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .stage {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            background: #0f172a;
+            border-radius: 10px;
+            border: 1px solid #1e293b;
+            transition: all 0.3s;
+        }
+
+        .stage.active {
+            border-color: #6366f1;
+            background: #1a1f35;
+        }
+
+        .stage.done {
+            border-color: #10b981;
+            background: #0a1f18;
+        }
+
+        .stage-icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            background: #1e293b;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .stage.active .stage-icon { background: #312e81; }
+        .stage.done .stage-icon { background: #064e3b; }
+
+        .stage-info h4 { font-size: 13px; font-weight: 600; }
+        .stage-info p { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+        .stage-status {
+            margin-left: auto;
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .stage.active .stage-status { color: #818cf8; }
+        .stage.done .stage-status { color: #10b981; }
+
+        /* ── Results Section ── */
+        .results-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 28px;
+            display: none;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .results-header h2 { font-size: 18px; font-weight: 700; }
+
+        .btn-copy {
+            background: #334155;
+            color: #e2e8f0;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-copy:hover { background: #475569; }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: #0f172a;
+            padding: 4px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 9px;
+            border: none;
+            background: transparent;
+            color: #64748b;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .tab.active {
+            background: #1e293b;
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .content-box {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            padding: 20px;
+            font-size: 14px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            color: #cbd5e1;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .content-box::-webkit-scrollbar { width: 4px; }
+        .content-box::-webkit-scrollbar-track { background: transparent; }
+        .content-box::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+        /* Spinner */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            width: 18px; height: 18px;
+            border: 2px solid #334155;
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+
+        /* Error */
+        .error-box {
+            background: #1f0a0a;
+            border: 1px solid #7f1d1d;
+            border-radius: 10px;
+            padding: 16px 20px;
+            color: #fca5a5;
+            font-size: 14px;
+            margin-top: 16px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+    <div class="header-icon">🔬</div>
+    <div>
+        <h1>AI Research Pipeline</h1>
+        <p>Three AI agents — Researcher, Analyst, Writer — collaborate to produce professional reports</p>
+    </div>
+</div>
+
+<!-- Main -->
+<div class="container">
+
+    <!-- Input -->
+    <div class="input-card">
+        <h2>Research Topic</h2>
+        <div class="input-row">
+            <input
+                type="text"
+                id="topicInput"
+                placeholder="e.g. The current state of AI automation tools in Pakistan"
+                onkeypress="if(event.key==='Enter') startResearch()"
+            >
+            <button class="btn-generate" id="generateBtn" onclick="startResearch()">
+                Generate Report
+            </button>
+        </div>
+        <div class="suggestions">
+            <span class="suggestion-label">Try these topics:</span>
+            <span class="chip" onclick="setTopic('AI automation tools for freelancers in 2026')">AI automation freelancing</span>
+            <span class="chip" onclick="setTopic('LangChain vs LlamaIndex comparison 2026')">LangChain vs LlamaIndex</span>
+            <span class="chip" onclick="setTopic('Rise of AI agents in enterprise software')">AI agents in enterprise</span>
+            <span class="chip" onclick="setTopic('Pakistan tech startup ecosystem 2026')">Pakistan tech startups</span>
+        </div>
+        <div class="error-box" id="errorBox"></div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-card" id="progressCard">
+        <div class="progress-header">
+            <h3>Research in progress...</h3>
+            <div class="spinner"></div>
+        </div>
+        <div class="stage-list">
+            <div class="stage" id="stage-researcher">
+                <div class="stage-icon">🔍</div>
+                <div class="stage-info">
+                    <h4>Researcher Agent</h4>
+                    <p>Searching the web with multiple queries to gather facts and statistics</p>
+                </div>
+                <div class="stage-status" id="status-researcher">Waiting</div>
+            </div>
+            <div class="stage" id="stage-analyst">
+                <div class="stage-icon">📊</div>
+                <div class="stage-info">
+                    <h4>Analyst Agent</h4>
+                    <p>Reading research notes and extracting the 5-7 most important insights</p>
+                </div>
+                <div class="stage-status" id="status-analyst">Waiting</div>
+            </div>
+            <div class="stage" id="stage-writer">
+                <div class="stage-icon">✍️</div>
+                <div class="stage-info">
+                    <h4>Writer Agent</h4>
+                    <p>Producing a polished 500-700 word professional article</p>
+                </div>
+                <div class="stage-status" id="status-writer">Waiting</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div class="results-card" id="resultsCard">
+        <div class="results-header">
+            <h2 id="resultTitle">Research Complete</h2>
+            <button class="btn-copy" onclick="copyArticle()">Copy Article</button>
+        </div>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('article')">Final Article</button>
+            <button class="tab" onclick="switchTab('insights')">Key Insights</button>
+            <button class="tab" onclick="switchTab('research')">Raw Research</button>
+        </div>
+        <div id="tab-article" class="tab-content active">
+            <div class="content-box" id="articleContent"></div>
+        </div>
+        <div id="tab-insights" class="tab-content">
+            <div class="content-box" id="insightsContent"></div>
+        </div>
+        <div id="tab-research" class="tab-content">
+            <div class="content-box" id="researchContent"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    let pollingInterval = null;
+    let currentJobId = null;
+    let currentStage = 0;
+    // Simulated stage progression — real status comes from backend
+    // We simulate stages visually since the pipeline does not report intermediate stages
+    const stageTimings = [8000, 20000, 35000]; // ms when each stage "appears" to complete
+
+    function setTopic(topic) {
+        document.getElementById("topicInput").value = topic;
+        document.getElementById("topicInput").focus();
+    }
+
+    async function startResearch() {
+        const topic = document.getElementById("topicInput").value.trim();
+        if (!topic) {
+            showError("Please enter a research topic first");
+            return;
+        }
+
+        // Reset UI
+        resetUI();
+        showProgress();
+
+        const btn = document.getElementById("generateBtn");
+        btn.disabled = true;
+        btn.textContent = "Running...";
+
+        // Simulate visual stage progression
+        simulateStageProgress();
+
+        try {
+            // POST to Flask /research route
+            const response = await fetch("/research", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ topic: topic })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                showError(data.error);
+                resetButton();
+                return;
+            }
+
+            currentJobId = data.job_id;
+
+            // Start polling for results every 4 seconds
+            pollingInterval = setInterval(pollStatus, 4000);
+
+        } catch (error) {
+            showError("Connection error. Make sure Flask is running on port 5002.");
+            resetButton();
+        }
+    }
+
+    async function pollStatus() {
+        if (!currentJobId) return;
+
+        try {
+            const response = await fetch(`/status/${currentJobId}`);
+            const data = await response.json();
+
+            if (data.status === "complete") {
+                clearInterval(pollingInterval);
+                completeAllStages();
+                showResults(data.result);
+                resetButton();
+
+            } else if (data.status === "error") {
+                clearInterval(pollingInterval);
+                showError("Pipeline error: " + data.error);
+                resetButton();
+            }
+            // If still "running", do nothing — poll again in 4 seconds
+
+        } catch (error) {
+            clearInterval(pollingInterval);
+            showError("Lost connection to server.");
+            resetButton();
+        }
+    }
+
+    function simulateStageProgress() {
+        // Visually progress through stages at approximate real timings
+        const stages = ["researcher", "analyst", "writer"];
+
+        // Mark researcher as active immediately
+        markStageActive("researcher");
+
+        setTimeout(() => {
+            markStageDone("researcher");
+            markStageActive("analyst");
+        }, stageTimings[0]);
+
+        setTimeout(() => {
+            markStageDone("analyst");
+            markStageActive("writer");
+        }, stageTimings[1]);
+
+        setTimeout(() => {
+            markStageActive("writer");
+        }, stageTimings[2]);
+    }
+
+    function markStageActive(stage) {
+        document.getElementById(`stage-${stage}`).className = "stage active";
+        document.getElementById(`status-${stage}`).textContent = "Running...";
+    }
+
+    function markStageDone(stage) {
+        document.getElementById(`stage-${stage}`).className = "stage done";
+        document.getElementById(`status-${stage}`).textContent = "✓ Done";
+    }
+
+    function completeAllStages() {
+        ["researcher", "analyst", "writer"].forEach(markStageDone);
+    }
+
+    function showResults(result) {
+        document.getElementById("progressCard").style.display = "none";
+        document.getElementById("resultsCard").style.display = "block";
+        document.getElementById("resultTitle").textContent = `Report: ${result.topic}`;
+
+        document.getElementById("articleContent").textContent = result.final_article || "No article generated.";
+        document.getElementById("insightsContent").textContent = result.key_insights || "No insights generated.";
+        document.getElementById("researchContent").textContent = result.research_notes || "No research notes.";
+    }
+
+    function switchTab(tabName) {
+        // Hide all tab contents
+        document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+
+        // Show selected
+        document.getElementById(`tab-${tabName}`).classList.add("active");
+        event.target.classList.add("active");
+    }
+
+    function copyArticle() {
+        const text = document.getElementById("articleContent").textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = document.querySelector(".btn-copy");
+            btn.textContent = "Copied!";
+            setTimeout(() => { btn.textContent = "Copy Article"; }, 2000);
+        });
+    }
+
+    function showProgress() {
+        document.getElementById("progressCard").style.display = "block";
+        document.getElementById("resultsCard").style.display = "none";
+        document.getElementById("errorBox").style.display = "none";
+    }
+
+    function showError(msg) {
+        const box = document.getElementById("errorBox");
+        box.textContent = "Error: " + msg;
+        box.style.display = "block";
+        document.getElementById("progressCard").style.display = "none";
+    }
+
+    function resetUI() {
+        currentStage = 0;
+        currentJobId = null;
+        if (pollingInterval) clearInterval(pollingInterval);
+        ["researcher", "analyst", "writer"].forEach(s => {
+            document.getElementById(`stage-${s}`).className = "stage";
+            document.getElementById(`status-${s}`).textContent = "Waiting";
+        });
+    }
+
+    function resetButton() {
+        const btn = document.getElementById("generateBtn");
+        btn.disabled = false;
+        btn.textContent = "Generate Report";
+    }
+</script>
+
+</body>
+</html>
